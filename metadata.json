@@ -1,0 +1,6 @@
+{
+  "name": "Swiss Health Insurance Optimizer",
+  "description": "Understand your Swiss health insurance, compare franchise and model scenarios, and calculate annual healthcare costs before choosing your plan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

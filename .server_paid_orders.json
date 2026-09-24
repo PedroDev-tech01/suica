@@ -1,0 +1,15 @@
+[
+  {
+    "orderId": "shio_ord_1789604251916_ph18l6",
+    "amountCHF": 19.9,
+    "currency": "CHF",
+    "status": "paid",
+    "createdAt": "2026-09-17T00:17:31.916Z",
+    "customerSummary": {
+      "canton": "ZH"
+    },
+    "paidAt": "2026-09-17T00:17:33.865Z",
+    "entitlementToken": "c7b182f7400658706e4e00e92c2570d719e0794540675d165f2b679560c1826f",
+    "paymentMethod": "credit_card"
+  }
+]
