@@ -8,7 +8,7 @@ const metaPixelHeadPlugin = (): Plugin => ({
   transformIndexHtml: {
     order: 'post',
     handler(html: string) {
-      const noscriptTag = `<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1378703800651707&ev=PageView&noscript=1" /></noscript>`;
+      const noscriptTag = `<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2198456244248121&ev=PageView&noscript=1" /></noscript>`;
       // Remove noscript fallback from body if present
       let cleaned = html.replace(/<!-- Meta Pixel Code \(Noscript fallback\) -->[\s\S]*?<!-- End Meta Pixel Code -->/, '');
       cleaned = cleaned.replace(noscriptTag, '');
