@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import {
-  Shield,
-  Sparkles,
-  ExternalLink,
   Menu,
   X,
-  BookOpen,
-  Layers,
-  Award,
+  Sparkles,
   User,
   LogOut,
-  Lock,
 } from 'lucide-react';
 import { AppView } from '../types/insurance';
 import { PRODUCT_CONFIG } from '../config/appConfig';
+import { redirectToHotmartCheckout } from '../config/payment';
+import { analytics } from '../services/analytics';
 
 interface NavbarProps {
   currentView: AppView;
@@ -39,6 +35,26 @@ export const Navbar: React.FC<NavbarProps> = ({
     setMobileMenuOpen(false);
   };
 
+  const scrollToAnchor = (id: string) => {
+    setMobileMenuOpen(false);
+    if (currentView !== 'landing') {
+      onNavigate('landing');
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleCheckoutClick = (source: string) => {
+    analytics.track('checkout_click', { source });
+    redirectToHotmartCheckout();
+    setMobileMenuOpen(false);
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,10 +64,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             id="nav-brand-logo"
             onClick={() => handleNav('landing')}
-            className="flex items-center gap-3 text-left group focus:outline-none"
+            className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer"
           >
             {/* Swiss Cross Emblem */}
-            <div className="w-9 h-9 rounded-lg bg-[#E30613] flex items-center justify-center shadow-xs group-hover:opacity-95 transition-opacity">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#E30613] flex items-center justify-center shadow-xs group-hover:opacity-95 transition-opacity shrink-0">
               <svg
                 viewBox="0 0 24 24"
                 className="w-5 h-5 fill-white"
@@ -67,85 +83,79 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#080A0D]">
                   SWISS HEALTH
                 </span>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-amber-950 border border-amber-500/40 shadow-xs tracking-wide">
-                  {PRODUCT_CONFIG.editionYear} EDITION
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-200 tracking-wider">
+                  2026 / 2027
                 </span>
               </div>
-              <span className="block text-[11px] font-semibold text-neutral-500 -mt-0.5 tracking-wider uppercase">
+              <span className="block text-[10px] sm:text-[11px] font-semibold text-neutral-500 -mt-0.5 tracking-wider uppercase">
                 Insurance Optimizer
               </span>
             </div>
           </button>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-1">
-            <button
-              type="button"
-              id="nav-link-landing"
-              onClick={() => handleNav('landing')}
-              className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                currentView === 'landing'
-                  ? 'text-[#E30613] bg-red-50/70'
-                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-              }`}
-            >
-              Overview
-            </button>
-
-            <button
-              type="button"
-              id="nav-link-optimizer"
-              onClick={() => handleNav('optimizer')}
-              className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                currentView === 'optimizer' || currentView === 'results'
-                  ? 'text-[#E30613] bg-red-50/70'
-                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-              }`}
-            >
-              Interactive Optimizer
-            </button>
-
-            <button
-              type="button"
-              id="nav-link-bonuses"
-              onClick={() => handleNav('bonuses')}
-              className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                currentView === 'bonuses'
-                  ? 'text-[#E30613] bg-red-50/70'
-                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-              }`}
-            >
-              Bonus Toolkit
-            </button>
-
-            <a
-              href={PRODUCT_CONFIG.officialPriminfoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              id="nav-link-priminfo"
-              className="px-3 py-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors inline-flex items-center gap-1.5"
-            >
-              <span>Priminfo (Official)</span>
-              <ExternalLink className="w-3 h-3 text-neutral-400" />
-            </a>
-
-            <button
-              type="button"
-              id="nav-link-sources"
-              onClick={() => handleNav('sources')}
-              className={`px-3 py-2 text-xs font-semibold rounded-md transition-colors ${
-                currentView === 'sources' || currentView === 'methodology'
-                  ? 'text-[#E30613] bg-red-50/70'
-                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-              }`}
-            >
-              Sources & Methodology
-            </button>
+          {/* Focused Sales Navigation (CRO: No conversion leaks) */}
+          <nav className="hidden md:flex items-center gap-2">
+            {!isFullAccess ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => scrollToAnchor('how-it-works')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  How It Works
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToAnchor('whats-included')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  What's Included
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToAnchor('pricing')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  Pricing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToAnchor('faq')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  FAQ
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleNav('optimizer')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  Interactive Optimizer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNav('bonuses')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  Bonus Toolkit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNav('sources')}
+                  className="px-3 py-2 text-xs font-bold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  Sources
+                </button>
+              </>
+            )}
           </nav>
 
           {/* Right Action Area */}
           <div className="hidden sm:flex items-center gap-2">
-            {userEmail ? (
+            {userEmail && (
               <div className="flex items-center gap-2 pr-2 border-r border-neutral-200">
                 <span className="text-xs text-neutral-600 font-medium max-w-[150px] truncate flex items-center gap-1">
                   <User className="w-3.5 h-3.5 text-emerald-600" />
@@ -155,27 +165,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     type="button"
                     onClick={onLogout}
-                    title="Sair da conta"
+                    title="Logout"
                     className="p-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>Sair</span>
+                    <span>Logout</span>
                   </button>
                 )}
               </div>
-            ) : (
-              <button
-                type="button"
-                id="nav-btn-login"
-                onClick={() => handleNav('login')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${
-                  currentView === 'login'
-                    ? 'bg-neutral-100 text-neutral-900 border-neutral-300'
-                    : 'text-neutral-700 hover:text-neutral-900 border-neutral-200 hover:bg-neutral-50'
-                }`}
-              >
-                <span>Área de Membros</span>
-              </button>
             )}
 
             {isFullAccess ? (
@@ -192,22 +189,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 id="nav-btn-cta-top"
-                onClick={() => handleNav('optimizer')}
-                className="px-4 py-2 bg-[#E30613] text-white text-xs font-bold rounded-lg hover:bg-[#c90510] transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                onClick={() => handleCheckoutClick('navbar_desktop')}
+                className="px-4 py-2.5 bg-[#E30613] hover:bg-[#c90510] text-white text-xs font-extrabold rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
               >
-                <span>Start Optimizer</span>
-                <span className="opacity-90 font-normal">| CHF 19.90</span>
+                <span>GET ACCESS — CHF {PRODUCT_CONFIG.priceCHF.toFixed(2)}</span>
               </button>
             )}
           </div>
 
-          {/* Mobile & Tablet menu toggle (visible on screens < 768px) */}
+          {/* Mobile menu toggle (visible on screens < 768px) */}
           <div className="flex md:hidden items-center gap-2">
+            {!isFullAccess && (
+              <button
+                type="button"
+                onClick={() => handleCheckoutClick('navbar_mobile_pill')}
+                className="px-3 py-1.5 bg-[#E30613] text-white text-[11px] font-extrabold rounded-lg uppercase tracking-wider"
+              >
+                CHF {PRODUCT_CONFIG.priceCHF.toFixed(2)}
+              </button>
+            )}
             <button
               type="button"
               id="btn-mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100"
+              className="p-2 text-neutral-700 hover:text-neutral-900 rounded-lg hover:bg-neutral-100"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -216,50 +221,61 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile & Tablet Drawer */}
+      {/* Streamlined Mobile Drawer (Eliminates conversion leakage) */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-neutral-200 bg-white px-4 pt-3 pb-5 space-y-2">
-          <button
-            type="button"
-            onClick={() => handleNav('landing')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-neutral-100"
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => handleNav('optimizer')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-neutral-100"
-          >
-            Interactive Optimizer
-          </button>
-          <button
-            type="button"
-            onClick={() => handleNav('bonuses')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-neutral-100"
-          >
-            Bonus Toolkit (6 Tools)
-          </button>
-          <a
-            href={PRODUCT_CONFIG.officialPriminfoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-neutral-100"
-          >
-            <span>Official Priminfo Comparison</span>
-            <ExternalLink className="w-4 h-4 text-neutral-400" />
-          </a>
-          <button
-            type="button"
-            onClick={() => handleNav('sources')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-neutral-100"
-          >
-            Sources & Methodology
-          </button>
+        <div className="md:hidden border-t border-neutral-200 bg-white px-4 pt-3 pb-5 space-y-2 shadow-lg">
+          {!isFullAccess ? (
+            <>
+              <button
+                type="button"
+                onClick={() => scrollToAnchor('how-it-works')}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100"
+              >
+                How It Works
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToAnchor('whats-included')}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100"
+              >
+                What's Included
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToAnchor('pricing')}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100"
+              >
+                Pricing (CHF 19.90)
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToAnchor('faq')}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100"
+              >
+                Frequently Asked Questions
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => handleNav('optimizer')}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100"
+              >
+                Interactive Optimizer
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNav('bonuses')}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100"
+              >
+                Bonus Toolkit
+              </button>
+            </>
+          )}
 
-          {/* Member Login / User Area on Mobile */}
-          <div className="pt-2 border-t border-neutral-100">
-            {userEmail ? (
+          {userEmail && (
+            <div className="pt-2 border-t border-neutral-100">
               <div className="flex items-center justify-between p-2.5 bg-neutral-50 rounded-lg text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-neutral-700 truncate max-w-[200px]">
                   <User className="w-4 h-4 text-emerald-600" />
@@ -272,21 +288,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="text-[#E30613] font-bold text-xs flex items-center gap-1 hover:underline"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>Sair</span>
+                    <span>Logout</span>
                   </button>
                 )}
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleNav('login')}
-                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold text-neutral-800 hover:bg-neutral-100 flex items-center justify-between"
-              >
-                <span>Área de Membros (Login)</span>
-                <Lock className="w-4 h-4 text-neutral-400" />
-              </button>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="pt-2">
             {isFullAccess ? (
@@ -300,10 +307,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 type="button"
-                onClick={() => handleNav('optimizer')}
-                className="w-full py-3 bg-[#E30613] text-white text-center font-bold text-sm rounded-lg"
+                onClick={() => handleCheckoutClick('navbar_mobile_drawer')}
+                className="w-full py-3.5 bg-[#E30613] hover:bg-[#c90510] text-white text-center font-extrabold text-sm rounded-xl uppercase tracking-wider shadow-md"
               >
-                Start Optimizer (CHF 19.90)
+                GET INSTANT ACCESS — CHF {PRODUCT_CONFIG.priceCHF.toFixed(2)}
               </button>
             )}
           </div>

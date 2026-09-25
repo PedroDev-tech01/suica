@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 import { defineConfig, Plugin } from 'vite';
 
 const metaPixelHeadPlugin = (): Plugin => ({
@@ -18,9 +19,40 @@ const metaPixelHeadPlugin = (): Plugin => ({
   },
 });
 
+/**
+ * Creates static directories and fallback index.html / 404.html copies
+ * so that static cloud preview servers (e.g. Google Cloud Run static proxy, Netlify, Cloudflare)
+ * can serve direct URLs like /optimizer-access and /v2 without "Page not found" 404 errors.
+ */
+const spaStaticRoutesPlugin = (): Plugin => ({
+  name: 'spa-static-routes-plugin',
+  closeBundle() {
+    const distPath = path.resolve(__dirname, 'dist');
+    const indexHtmlPath = path.resolve(distPath, 'index.html');
+
+    if (!fs.existsSync(indexHtmlPath)) return;
+
+    const htmlContent = fs.readFileSync(indexHtmlPath, 'utf-8');
+
+    // 1. Create 404.html fallback
+    fs.writeFileSync(path.resolve(distPath, '404.html'), htmlContent);
+
+    // 2. Create subdirectories with index.html for direct navigation
+    const routes = ['optimizer-access'];
+    for (const route of routes) {
+      const routeDir = path.resolve(distPath, route);
+      if (!fs.existsSync(routeDir)) {
+        fs.mkdirSync(routeDir, { recursive: true });
+      }
+      fs.writeFileSync(path.resolve(routeDir, 'index.html'), htmlContent);
+      fs.writeFileSync(path.resolve(distPath, `${route}.html`), htmlContent);
+    }
+  },
+});
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), metaPixelHeadPlugin()],
+    plugins: [react(), tailwindcss(), metaPixelHeadPlugin(), spaStaticRoutesPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

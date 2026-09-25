@@ -38,6 +38,7 @@ interface ResultPreviewPaywallProps {
   onUnlockClick: () => void;
   onEditSetup: () => void;
   hasAbandonedCheckout?: boolean;
+  checkoutUrl?: string;
 }
 
 export const ResultPreviewPaywall: React.FC<ResultPreviewPaywallProps> = ({
@@ -49,7 +50,10 @@ export const ResultPreviewPaywall: React.FC<ResultPreviewPaywallProps> = ({
   onUnlockClick,
   onEditSetup,
   hasAbandonedCheckout = false,
+  checkoutUrl,
 }) => {
+  const finalCheckoutUrl = checkoutUrl || HOTMART_CHECKOUT_URL;
+
   // Fire analytics on mount
   useEffect(() => {
     analytics.track('result_preview_viewed', {
@@ -94,12 +98,12 @@ export const ResultPreviewPaywall: React.FC<ResultPreviewPaywallProps> = ({
             </div>
           </div>
           <a
-            href={HOTMART_CHECKOUT_URL}
+            href={finalCheckoutUrl}
             target="_blank"
             rel="noopener noreferrer"
             id="btn-resume-checkout"
             onClick={() => {
-              analytics.track('hotmart_checkout_clicked', { url: HOTMART_CHECKOUT_URL });
+              analytics.track('hotmart_checkout_clicked', { url: finalCheckoutUrl });
             }}
             className="w-full sm:w-auto shrink-0 px-5 py-2.5 bg-[#E30613] hover:bg-[#c90510] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer no-underline uppercase tracking-wider"
           >
@@ -339,12 +343,12 @@ export const ResultPreviewPaywall: React.FC<ResultPreviewPaywallProps> = ({
         {/* Main CTA & Trust Badges */}
         <div className="mt-8 max-w-md mx-auto space-y-3">
           <a
-            href={HOTMART_CHECKOUT_URL}
+            href={finalCheckoutUrl}
             target="_blank"
             rel="noopener noreferrer"
             id="paywall-btn-unlock"
             onClick={() => {
-              analytics.track('hotmart_checkout_clicked', { url: HOTMART_CHECKOUT_URL });
+              analytics.track('hotmart_checkout_clicked', { url: finalCheckoutUrl });
             }}
             className="w-full py-4 bg-[#E30613] hover:bg-[#c90510] text-white text-base font-extrabold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer no-underline text-center uppercase tracking-wide"
           >
@@ -477,11 +481,11 @@ export const ResultPreviewPaywall: React.FC<ResultPreviewPaywallProps> = ({
                 <div className="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-[10px] text-neutral-400 font-medium">
                   <span>CHF 19.90 one-time</span>
                   <a
-                    href={HOTMART_CHECKOUT_URL}
+                    href={finalCheckoutUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => {
-                      analytics.track('hotmart_checkout_clicked', { url: HOTMART_CHECKOUT_URL });
+                      analytics.track('hotmart_checkout_clicked', { url: finalCheckoutUrl });
                     }}
                     className="text-[#E30613] font-bold hover:underline cursor-pointer flex items-center gap-0.5 no-underline"
                   >
@@ -508,11 +512,11 @@ export const ResultPreviewPaywall: React.FC<ResultPreviewPaywallProps> = ({
             Unlock your full personalized comparison and download your exportable summary.
           </p>
           <a
-            href={HOTMART_CHECKOUT_URL}
+            href={finalCheckoutUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
-              analytics.track('hotmart_checkout_clicked', { url: HOTMART_CHECKOUT_URL });
+              analytics.track('hotmart_checkout_clicked', { url: finalCheckoutUrl });
             }}
             className="px-6 py-2.5 bg-[#E30613] hover:bg-[#c90510] text-white text-xs font-bold rounded-xl shadow-md transition-colors cursor-pointer no-underline uppercase tracking-wide"
           >

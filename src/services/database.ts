@@ -53,8 +53,26 @@ export interface DbReport {
 
 /**
  * Local Storage Adapter fulfilling the storage contract for MVP
+ * Supports scoped storage keys (e.g. v1 vs v2) so separate routes
+ * never overwrite or interfere with each other's questionnaire or results.
  */
-const STORAGE_KEY = 'shio_user_session_v1';
+let currentScope = 'v1';
+
+export function setStorageScope(scope: string): void {
+  currentScope = scope || 'v1';
+}
+
+export function getStorageScope(): string {
+  return currentScope;
+}
+
+function getStorageKey(): string {
+  return `shio_user_session_${currentScope}`;
+}
+
+function getAccessKey(): string {
+  return currentScope === 'v1' ? 'shio_hotmart_access' : `shio_hotmart_access_${currentScope}`;
+}
 
 export interface LocalSessionData {
   profile: UserProfile;
@@ -67,7 +85,7 @@ export interface LocalSessionData {
 
 export function saveLocalSession(data: LocalSessionData): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(getStorageKey(), JSON.stringify(data));
   } catch (e) {
     console.warn('Could not save session to localStorage', e);
   }
@@ -75,7 +93,7 @@ export function saveLocalSession(data: LocalSessionData): void {
 
 export function loadLocalSession(): LocalSessionData | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getStorageKey()) || (currentScope === 'v1' ? localStorage.getItem('shio_user_session_v1') : null);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
@@ -86,8 +104,11 @@ export function loadLocalSession(): LocalSessionData | null {
 
 export function clearLocalSession(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem('shio_access_token');
+    localStorage.removeItem(getStorageKey());
+    if (currentScope === 'v1') {
+      localStorage.removeItem('shio_user_session_v1');
+    }
+    localStorage.removeItem(`shio_access_token_${currentScope}`);
   } catch (e) {
     console.warn('Could not clear local session', e);
   }
@@ -104,16 +125,22 @@ export interface StoredInsuranceState {
 }
 
 export const dbService = {
+  setScope: (scope: string): void => {
+    setStorageScope(scope);
+  },
+  getScope: (): string => {
+    return getStorageScope();
+  },
   saveInsuranceState: (state: StoredInsuranceState): void => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(getStorageKey(), JSON.stringify(state));
     } catch (e) {
       console.warn('Failed to save to localStorage', e);
     }
   },
   loadInsuranceState: (): StoredInsuranceState | null => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(getStorageKey()) || (currentScope === 'v1' ? localStorage.getItem('shio_user_session_v1') : null);
       return raw ? JSON.parse(raw) : null;
     } catch (e) {
       console.warn('Failed to load from localStorage', e);
@@ -122,7 +149,7 @@ export const dbService = {
   },
   hasSavedQuestionnaire: (): boolean => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(getStorageKey()) || (currentScope === 'v1' ? localStorage.getItem('shio_user_session_v1') : null);
       if (!raw) return false;
       const parsed: StoredInsuranceState = JSON.parse(raw);
       if (parsed.hasCompletedQuestionnaire) return true;
@@ -143,17 +170,25 @@ export const dbService = {
   },
   isFullAccessGranted: (): boolean => {
     try {
-      return localStorage.getItem('shio_hotmart_access') === 'true';
+      const accessKey = getAccessKey();
+      return (
+        localStorage.getItem(accessKey) === 'true' ||
+        (currentScope === 'v1' && localStorage.getItem('shio_hotmart_access') === 'true')
+      );
     } catch {
       return false;
     }
   },
   setFullAccessGranted: (granted: boolean): void => {
     try {
+      const accessKey = getAccessKey();
       if (granted) {
-        localStorage.setItem('shio_hotmart_access', 'true');
+        localStorage.setItem(accessKey, 'true');
       } else {
-        localStorage.removeItem('shio_hotmart_access');
+        localStorage.removeItem(accessKey);
+        if (currentScope === 'v1') {
+          localStorage.removeItem('shio_hotmart_access');
+        }
       }
     } catch {
       // Ignore
@@ -162,7 +197,10 @@ export const dbService = {
   clearAllData: (): void => {
     clearLocalSession();
     try {
-      localStorage.removeItem('shio_hotmart_access');
+      localStorage.removeItem(getAccessKey());
+      if (currentScope === 'v1') {
+        localStorage.removeItem('shio_hotmart_access');
+      }
     } catch {
       // Ignore
     }

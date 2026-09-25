@@ -61,7 +61,9 @@ function checkIsOptimizerAccessRoute(): boolean {
     hash.includes('optimizer-access') ||
     search.includes('optimizer-access') ||
     search.includes('route=optimizer-access') ||
-    search.includes('access=full')
+    search.includes('access=full') ||
+    search.includes('access=true') ||
+    search.includes('access=1')
   );
 }
 
@@ -461,6 +463,7 @@ export default function App() {
               altPlan={altPlan}
               usage={usage}
               calculation={calculationResult}
+              checkoutUrl={HOTMART_CHECKOUT_URL}
               onUnlockClick={() => {
                 redirectToHotmartCheckout();
               }}
@@ -539,7 +542,7 @@ export default function App() {
                   +
                 </span>
                 <span className="font-extrabold text-[#080A0D] tracking-tight">
-                  SWISS HEALTH INSURANCE OPTIMIZER
+                  SWISS HEALTH INSURANCE OPTIMIZER — {PRODUCT_CONFIG.editionYear} EDITION
                 </span>
               </div>
               <p className="text-neutral-500 leading-relaxed max-w-md">
